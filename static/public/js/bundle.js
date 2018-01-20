@@ -1187,7 +1187,7 @@ class App extends preact_1.Component {
         const size = 750;
         // if you want to use local server change the following domain value
         // `http://localhost:3000`
-        const domain = 'http://localhost:3000';
+        const domain = 'https://d13psignfh9m57.cloudfront.net';
         const endpoint = `${domain}/images?name=${name}&size=${size}`;
         fetch(endpoint, {
             method: 'POST',
@@ -1246,7 +1246,7 @@ class App extends preact_1.Component {
             fontWeight: 'normal',
             fontSize: '1.5em',
             textAlign: 'center',
-            margin: '25px 0 1em'
+            margin: '25px 0 0'
         };
         const imageStyle = {
             maxWidth: 50
@@ -1254,6 +1254,7 @@ class App extends preact_1.Component {
         return (preact_1.h("div", null,
             preact_1.h("h1", { style: h1Style }, "Generate static responsive images"),
             preact_1.h("div", { style: { maxWidth: 400, padding: '0 25px 25px', margin: '0 auto' } },
+                preact_1.h("div", { style: { fontSize: '0.825em', textAlign: 'center', fontWeight: 'bold', margin: '25px 0', background: '#f0f0f0', padding: '10px 0' } }, "DEMO (image expired within a day)"),
                 preact_1.h("form", null,
                     preact_1.h("input", { type: "file", accept: "images/jpeg", id: "upload-image", onChange: this.onChangeHandler, style: { display: 'block', margin: '1em 0' } }),
                     preact_1.h(ImagePreview, { src: this.state.imagePreviewSrc }),
