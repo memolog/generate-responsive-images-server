@@ -12,12 +12,9 @@ Resources:
         Rules:
           - Id: ExpirationRule
             Status: Enabled
-            ExpirationInDays: '3'
+            ExpirationInDays: '1'
             AbortIncompleteMultipartUpload:
               DaysAfterInitiation: '1'
-            Transitions:
-              - TransitionInDays: '1'
-                StorageClass: Glacier
   GenerateResponsiveImagesLoggingBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Delete
@@ -122,7 +119,7 @@ Resources:
                     responseParameters:
                       method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
                       method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                      method.response.header.Access-Control-Allow-Origin: "'https://memolog.github.io'"
                 passthroughBehavior: when_no_match
                 requestTemplates:
                   application/json: "{\"statusCode\": 200}"

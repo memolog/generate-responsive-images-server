@@ -101,7 +101,7 @@ class App extends Component<AppProps, AppState> {
 
     // if you want to use local server change the following domain value
     // `http://localhost:3000`
-    const domain = 'http://localhost:3000';
+    const domain = 'https://d13psignfh9m57.cloudfront.net';
     const endpoint = `${domain}/images?name=${name}&size=${size}`;
 
     fetch(endpoint, {
@@ -161,7 +161,7 @@ class App extends Component<AppProps, AppState> {
       fontWeight: 'normal',
       fontSize: '1.5em',
       textAlign: 'center',
-      margin: '25px 0 1em'
+      margin: '25px 0 0'
     }
     const imageStyle = {
       maxWidth: 50
@@ -171,6 +171,7 @@ class App extends Component<AppProps, AppState> {
       <div>
         <h1 style={h1Style}>Generate static responsive images</h1>
         <div style={{ maxWidth: 400, padding: '0 25px 25px', margin: '0 auto' }}>
+          <div style={{ fontSize: '0.825em', textAlign: 'center', fontWeight: 'bold', margin:'25px 0', background: '#f0f0f0', padding: '10px 0'}}>DEMO (image expired within a day)</div>
           <form>
             <input type="file" accept="images/jpeg" id="upload-image" onChange={this.onChangeHandler} style={{ display: 'block', margin: '1em 0'}} />
             <ImagePreview src={this.state.imagePreviewSrc} />
