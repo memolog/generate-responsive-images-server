@@ -1,5 +1,7 @@
 # Generate Responsive Images Server
 Generate static responsive images from one image on localhost service.
+It's for the server side implementation for https://github.com/memolog/generate-responsive-images-service
+
 [Demo](https://memolog.github.io/generate-responsive-images-server/)
 
 ```
@@ -26,14 +28,14 @@ npm run develop
 
 Edit files in ./static/src, and then ```npm run build```
 
-# Create Serverless Service (still on development though)
+## Serverless Service (That's optinal, I implemented it for the demo site backend)
 You can install server function to AWS lambda, and serve S3 bucket (But not so easier than localhost).
 
-## Install AWS CLI
+### Install AWS CLI
 
 [Installing the AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/installing.html)
 
-## Build lambda function dependencies
+### Build lambda function dependencies
 
 First, you have to build sharp module to work in AWS Lambda. See the [Documentation](http://sharp.pixelplumbing.com/en/latest/install/#aws-lambda) for more details.
 
@@ -48,7 +50,7 @@ and then, install the other dependencies
 npm install
 ```
 
-### Install Docker
+#### Install Docker
 If you don't have Docker in your local, see [Install Docker](https://docs.docker.com/engine/installation/).
 
 You have installed [brew](https://brew.sh/) an [brew cask](https://caskroom.github.io/), you can install docker with brew cask
@@ -57,10 +59,10 @@ You have installed [brew](https://brew.sh/) an [brew cask](https://caskroom.gith
 brew cask install docker
 ```
 
-## Attach inline policy
+### Attach inline policy
 Attach an inline policy to deploy like the `./cloud_formation/inline-policy.json`. You must see the policy and update it for your own purpose
 
-## Set your access key and secret in the `~/.aws/config` file like the following
+### Set your access key and secret in the `~/.aws/config` file like the following
 ```
 [profile responvie-images]
 region = ap-northeast-1
@@ -68,7 +70,7 @@ aws_access_key_id = AKIAIOSFODNN7EXAMPLE
 aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 ```
 
-## Create S3 bucket to package lambda function
+### Create S3 bucket to package lambda function
 
 You should replace `{your-bucket-name}` with an unique bucket name.
 You can do the same thing in AWS management console.
@@ -77,7 +79,7 @@ You can do the same thing in AWS management console.
 aws s3 mb s3://{your-bucket-name}
 ```
 
-## Package and Deploy the CloudFormation stack
+### Package and Deploy the CloudFormation stack
 Deploy the following serverless service on AWS with AWS CloudFormation.
 - S3 Bucket (GenerateResponsiveImagesBucket)
   - this bucket aimed to stock image, which images are expired in 3 days. If you want to keep images longer, you should update `ExpirationInDays` number in template.yaml
@@ -112,14 +114,14 @@ You can access the APIs like the following
 - post image: POST https://{cloudfront-domain}/images
 - get responsive images: GET https://{cloudfront-domain}/images/{image-name}/{image-name.jpeg}
 
-# Delete Serverless Service
-## Delete S3 bucket for packaging
+### Delete Serverless Service
+#### Delete S3 bucket for packaging
 ```
 aws s3 rm s3://{your-bucket-name} --recursive
 aws s3 delete-bucket s3://{your-bucket-name}
 ```
 
-## Delete CloudFormation Stack
+#### Delete CloudFormation Stack
 ```
 aws cloudformation delete-stack  --stack-name generate-responsive-images --profile responsive-images
 ```

@@ -1,6 +1,6 @@
 {
   "name": "generate-responsive-images-server",
-  "version": "1.0.4",
+  "version": "1.0.0",
   "description": "Generate static responsive images from one image",
   "main": "./server/server.js",
   "scripts": {
