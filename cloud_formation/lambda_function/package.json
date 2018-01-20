@@ -1,0 +1,16 @@
+{
+  "name": "generate-responsive-images-lambda",
+  "version": "1.0.0",
+  "description": "Generate responsive images with AWS lambda",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Yutaka Yamaguchi",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.179.0",
+    "sharp": "^0.18.4"
+  },
+  "devDependencies": {}
+}

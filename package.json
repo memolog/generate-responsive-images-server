@@ -1,0 +1,19 @@
+{
+  "name": "generate-responsive-images-server",
+  "version": "1.0.4",
+  "description": "Generate static responsive images from one image",
+  "main": "./server/server.js",
+  "scripts": {
+    "develop": "cd ./static/src && npm install",
+    "start": "node ./server/server.js",
+    "build": "cd ./static && npm run build"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "generate-responsive-images": "^1.1.2",
+    "serve-static": "^1.13.1"
+  }
+}

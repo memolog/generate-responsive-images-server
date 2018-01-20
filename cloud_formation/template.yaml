@@ -1,0 +1,268 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Generate responsive images from an original one
+Resources:
+  GenerateResponsiveImagesBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      AccessControl: PublicRead
+      BucketName: generate-reponsive-images
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpirationRule
+            Status: Enabled
+            ExpirationInDays: '3'
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: '1'
+            Transitions:
+              - TransitionInDays: '1'
+                StorageClass: Glacier
+  GenerateResponsiveImagesLoggingBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: generate-reponsive-images-log
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpirationRule
+            Status: Enabled
+            ExpirationInDays: '30'
+            Transitions:
+              - TransitionInDays: '1'
+                StorageClass: Glacier
+  ApiCloudFront:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+        - DomainName: !Sub ${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com
+          Id: GenerateResponsiveImagesApi
+          CustomOriginConfig:
+            HTTPSPort: '443'
+            OriginProtocolPolicy: https-only
+          OriginPath: /Prod
+          OriginCustomHeaders:
+            -
+              HeaderName: Accept
+              HeaderValue: 'image/jpeg, image/png, image/webp, image/gif, application/json'
+        Enabled: 'true'
+        Logging:
+          IncludeCookies: 'true'
+          Bucket: !Sub ${GenerateResponsiveImagesLoggingBucket}.s3.amazonaws.com
+        DefaultCacheBehavior:
+          TargetOriginId: GenerateResponsiveImagesApi
+          SmoothStreaming: 'false'
+          ForwardedValues:
+            QueryString: 'true'
+            Cookies:
+              Forward: all
+          ViewerProtocolPolicy: https-only
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+            - PUT
+            - POST
+            - PATCH
+            - DELETE
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      DefinitionBody:
+        swagger: 2.0
+        info:
+          title: GenerateResponsiveImages
+        schemes:
+          - https
+        paths:
+          /images:
+            post:
+              produces:
+              - application/json
+              parameters:
+                - name: name
+                  in: query
+                  required: true
+                  type: string
+              responses:
+                '200':
+                  description: 200 response
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                uri:
+                  !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UploadResponsiveImageFunction.Arn}/invocations
+                httpMethod: POST
+                type: aws_proxy
+            options:
+              consumes:
+                - application/json
+              produces:
+                - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+                '400':
+                  description: 400 response
+                '500':
+                  description: 500 response
+              x-amazon-apigateway-integration:
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                passthroughBehavior: when_no_match
+                requestTemplates:
+                  application/json: "{\"statusCode\": 200}"
+                type: mock
+          /images/{dir}/{object}:
+            get:
+              produces:
+              - image/gif
+              - image/jpeg
+              - image/png
+              - image/webp
+              parameters:
+                -
+                  name: dir
+                  in: path
+                  required: true
+                  type: string
+                -
+                  name: object
+                  in: path
+                  required: true
+                  type: string
+                -
+                  name: orig
+                  in: query
+                  required: false
+                  type: string
+                -
+                  name: size
+                  in: query
+                  required: false
+                  type: string
+              responses:
+                '200':
+                  description: 200 response
+                  headers:
+                    content-type:
+                      type: string
+                    Content-Type:
+                      type: string
+                '400':
+                  description: Bad request.
+                '404':
+                  description: Not Found.
+                '500':
+                  description: 500 response
+              x-amazon-apigateway-integration:
+                responses:
+                  '404':
+                    statusCode: 404
+                  '4\\d{2}':
+                    statusCode: 400
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.content-type: integration.response.header.content-type
+                      method.response.header.Content-Type: integration.response.header.Content-Type
+                  '5\\d{2}':
+                    statusCode: 500
+                uri:
+                  !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GenerateResponsiveImageFunction.Arn}/invocations
+                httpMethod: POST
+                type: aws_proxy
+        x-amazon-apigateway-binary-media-types:
+          - image/gif
+          - image/jpeg
+          - image/png
+          - image/webp
+      StageName: Prod
+  UploadResponsiveImageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: UploadResponsiveImageFunction
+      Handler: index.uploadImage
+      Runtime: nodejs6.10
+      CodeUri: ./lambda_function
+      Policies: AWSLambdaBasicExecutionRole
+      MemorySize: 128
+      Timeout: 3
+      Events:
+        PostResource:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApi
+            Path: /images
+            Method: post
+      Environment:
+        Variables:
+          Bucket: !Ref GenerateResponsiveImagesBucket
+          accessKeyId: !Ref AWSLambdaUserAccessKey
+          secretAccessKey: !GetAtt AWSLambdaUserAccessKey.SecretAccessKey
+  GenerateResponsiveImageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: GenerateResponsiveImageFunction
+      Handler: index.generate
+      Runtime: nodejs6.10
+      CodeUri: ./lambda_function
+      Policies: AWSLambdaBasicExecutionRole
+      MemorySize: 1536
+      Timeout: 3
+      Events:
+        PostResource:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApi
+            Path: /images/{dir}/{object}
+            Method: get
+      Environment:
+        Variables:
+          Bucket: !Ref GenerateResponsiveImagesBucket
+          accessKeyId: !Ref AWSLambdaUserAccessKey
+          secretAccessKey: !GetAtt AWSLambdaUserAccessKey.SecretAccessKey
+  AWSLambdaUserPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: AWSLambdaUserPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+            Resource:
+              - !Sub ${GenerateResponsiveImagesBucket.Arn}/*
+  AWSLambdaUser:
+    Type: AWS::IAM::User
+    Properties:
+      ManagedPolicyArns:
+        - !Ref AWSLambdaUserPolicy
+      UserName: generate-responsive-images-lambda
+  AWSLambdaUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      Status: Active
+      UserName: !Ref AWSLambdaUser
+Outputs:
+  GatewayApiUrl:
+    Value: !Sub https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod
+  CloudFrontDomain:
+    Value: !GetAtt ApiCloudFront.DomainName
